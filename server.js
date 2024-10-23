@@ -28,7 +28,7 @@ app.get('/api/hello',(req,res)=>{
 }); ///api/hello 의 get 요청을 처리하는 라우트
 app.get('/api/customers',(req,res)=>{
     connection.query(
-      "select * from customer",
+      "select * from customer where isDeleted = 0",
       (err,rows,fields)=>{
         res.send(rows);  
       }
@@ -38,7 +38,7 @@ app.get('/api/customers',(req,res)=>{
 app.use('/image',express.static('./upload')); ///image 폴더 접근시 업로드 폴더를 사용할 수 있도록 설정
 // 라우트 핸들러 정의
 app.post('/api/customers', upload.single('image'), (req, res) => {
-  let sql = 'INSERT INTO customer(image,NAME,birthDate,gender,job) VALUES(?,?,?,?,?)';
+  let sql = 'INSERT INTO customer(image,NAME,birthDate,gender,job,createDate,isDeleted) VALUES(?,?,?,?,?,now(),0)';
   let image = '/image/' + req.file.filename; //multer 라이브러리가 겹치지 않는 이름으로 자동 할당된다.
   let name = req.body.name;
   let birthDate = req.body.birthDate;
@@ -57,5 +57,15 @@ app.post('/api/customers', upload.single('image'), (req, res) => {
     }
   )
 }); //post로 api/customers 접근시 upload  할 수 있도록 처리
+
+app.delete('/api/customers/:id',(req,res)=>{
+  let sql = 'UPDATE CUSTOMER set isDeleted = 1 where id = ?';
+  let params = [req.params.id];
+  connection.query(sql,params,
+    (err,rows,fields)=>{
+      res.send(rows);
+    }
+  )
+})
 
 app.listen(port,()=>console.log(`Listening on port ${port}`)); //app를 구동시키고 consol 에 출력
